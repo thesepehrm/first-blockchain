@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strconv"
 
 	"gitlab.com/thesepehrm/first-blockchain/blockchain"
 )
@@ -17,7 +18,9 @@ func main() {
 		fmt.Println("-------------------")
 		fmt.Printf("Block: %s\n", block.Data)
 		fmt.Printf("Hash: %x\n", block.Hash)
-		fmt.Printf("PrevHash: %x\n", block.PrevHash)
+		pow := blockchain.NewProof(block)
+		fmt.Println("Proof of work:")
+		fmt.Printf("PoW: %s\n", strconv.FormatBool(pow.Validate()))
 		fmt.Println("-------------------")
 	}
 }
