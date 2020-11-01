@@ -1,9 +1,10 @@
 package blockchain
 
-// BlockChain is the structure for a blockchain
-type BlockChain struct {
-	Blocks []*Block
-}
+import (
+	"bytes"
+	"encoding/gob"
+	"log"
+)
 
 // Block is the structure of a block in a blockchain
 type Block struct {
@@ -25,18 +26,34 @@ func createBlock(data string, prevHash []byte) *Block {
 	return block
 }
 
-func (chain *BlockChain) AddBlock(data string) {
-	prevBlock := chain.Blocks[len(chain.Blocks)-1]
-	newBlock := createBlock(data, prevBlock.Hash)
-	chain.Blocks = append(chain.Blocks, newBlock)
-}
-
 // Genesis creates the genesis block
 func Genesis() *Block {
 	return createBlock("Genesis", []byte{})
 }
 
-// InitBlockChain makes a new blockchain
-func InitBlockChain() *BlockChain {
-	return &BlockChain{[]*Block{Genesis()}}
+func (b *Block) Serialize() []byte {
+	var res bytes.Buffer
+	encoder := gob.NewEncoder(&res)
+	err := encoder.Encode(b)
+
+	Handle(err)
+
+	return res.Bytes()
+}
+
+func Deserialize(data []byte) *Block {
+	var block Block
+	decoder := gob.NewDecoder(bytes.NewReader(data))
+	err := decoder.Decode(&block)
+
+	Handle(err)
+
+	return &block
+
+}
+
+func Handle(err error) {
+	if err != nil {
+		log.Panic(err)
+	}
 }
