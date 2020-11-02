@@ -47,9 +47,9 @@ func (pow *ProofOfWork) Run() (int, []byte) {
 		data := pow.InitData(nonce)
 		hash = sha256.Sum256(data)
 		fmt.Printf("\r%x", hash)
-		fmt.Println()
 		intHash.SetBytes(hash[:])
 		if intHash.Cmp(pow.Target) == -1 {
+			fmt.Println()
 			break
 		}
 	}
