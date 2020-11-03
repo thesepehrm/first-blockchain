@@ -1,3 +1,4 @@
 # include folders but not the data
 tmp/blocks/*
 tmp/blocks/.gitkeep
+tmp/wallets.data
