@@ -5,7 +5,6 @@ import (
 	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/sha256"
-	"fmt"
 
 	"golang.org/x/crypto/ripemd160"
 )
@@ -66,8 +65,6 @@ func (w Wallet) Address() []byte {
 	fullHash := append(versionedPublicKeyHash, checksum...)
 
 	address := encodeBase58(fullHash)
-
-	fmt.Printf("Public Key:\t %x\nPublic Hash:\t %x\nAddress:\t %x\n", w.PublicKey, publicKeyHash, address)
 
 	return address
 }
