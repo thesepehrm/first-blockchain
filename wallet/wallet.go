@@ -1,6 +1,7 @@
 package wallet
 
 import (
+	"bytes"
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
@@ -67,4 +68,16 @@ func (w Wallet) Address() []byte {
 	address := encodeBase58(fullHash)
 
 	return address
+}
+
+func ValidateAddress(address string) bool {
+	decodedAddress := decodeBase58([]byte(address))
+
+	version := decodedAddress[0]
+	inputChecksum := decodedAddress[len(decodedAddress)-checksumLength:]
+	keyHash := decodedAddress[1 : len(decodedAddress)-checksumLength]
+
+	checksum := Checksum(append([]byte{version}, keyHash...))
+
+	return bytes.Compare(checksum, inputChecksum) == 0
 }
