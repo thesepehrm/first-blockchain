@@ -95,7 +95,7 @@ func (cli *CommandLine) createWallet() {
 	address := w.AddWallet()
 	w.SaveFile()
 
-	fmt.Printf("New wallet address is: %s", address)
+	fmt.Printf("New wallet address is: %s\n", address)
 }
 
 func (cli *CommandLine) Run() {
