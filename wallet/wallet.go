@@ -1,0 +1,73 @@
+package wallet
+
+import (
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rand"
+	"crypto/sha256"
+	"fmt"
+
+	"golang.org/x/crypto/ripemd160"
+)
+
+const (
+	checksumLength = 4
+	version        = byte(0x00)
+)
+
+type Wallet struct {
+	PrivateKey ecdsa.PrivateKey
+	PublicKey  []byte
+}
+
+//NewKeyPair can generate up to 10^77 different keys which is just 1/10 number of atoms in the universe
+func NewKeyPair() (ecdsa.PrivateKey, []byte) {
+	curve := elliptic.P256()
+	private, err := ecdsa.GenerateKey(curve, rand.Reader)
+	Handle(err)
+
+	pub := append(private.PublicKey.X.Bytes(), private.PublicKey.Y.Bytes()...)
+	return *private, pub
+
+}
+
+func MakeWallet() *Wallet {
+	privateKey, publicKey := NewKeyPair()
+	wallet := Wallet{privateKey, publicKey}
+	return &wallet
+}
+
+// PublicKeyHash : publicKey -> sha256 -> ripemd160
+func PublicKeyHash(publicKey []byte) []byte {
+	pubHash := sha256.Sum256(publicKey)
+
+	ripeHash := ripemd160.New()
+	_, err := ripeHash.Write(pubHash[:])
+	Handle(err)
+
+	pubKeyHash := ripeHash.Sum(nil)
+
+	return pubKeyHash
+}
+
+func Checksum(keyHash []byte) []byte {
+	firstHash := sha256.Sum256(keyHash)
+	secondHash := sha256.Sum256(firstHash[:])
+
+	return secondHash[:checksumLength]
+}
+
+func (w Wallet) Address() []byte {
+	publicKeyHash := PublicKeyHash(w.PublicKey)
+
+	versionedPublicKeyHash := append([]byte{version}, publicKeyHash...)
+	checksum := Checksum(versionedPublicKeyHash)
+
+	fullHash := append(versionedPublicKeyHash, checksum...)
+
+	address := encodeBase58(fullHash)
+
+	fmt.Printf("Public Key:\t %x\nPublic Hash:\t %x\nAddress:\t %x\n", w.PublicKey, publicKeyHash, address)
+
+	return address
+}
