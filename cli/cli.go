@@ -9,6 +9,7 @@ import (
 	"strconv"
 
 	"gitlab.com/thesepehrm/first-blockchain/blockchain"
+	"gitlab.com/thesepehrm/first-blockchain/wallet"
 )
 
 // CommandLine is a structure for cli commands
@@ -20,6 +21,9 @@ func (cli *CommandLine) printHelp() {
 	println(" createchain -address ADDRESS - makes the blockchain and the address mines the genesis")
 	println(" send -from ADDRESS -to ADDRESS -amount AMOUNT - Sends some coin from an address to another address")
 	println(" print - Prints all of the blocks")
+	println("-----Wallets-----")
+	println(" createwallet - Creates a new Wallet")
+	println(" listaddresses - Lists the addresses of our wallets")
 }
 
 func (cli *CommandLine) validateArgs() {
@@ -76,6 +80,24 @@ func (cli *CommandLine) send(from string, to string, amount int) {
 
 }
 
+func (cli *CommandLine) listAddresses() {
+	w, err := wallet.CreateWallets()
+	wallet.Handle(err)
+
+	addresses := w.GetAllAddresses()
+	for _, address := range addresses {
+		fmt.Println(address)
+	}
+}
+
+func (cli *CommandLine) createWallet() {
+	w, _ := wallet.CreateWallets()
+	address := w.AddWallet()
+	w.SaveFile()
+
+	fmt.Printf("New wallet address is: %s", address)
+}
+
 func (cli *CommandLine) Run() {
 	cli.validateArgs()
 
@@ -91,6 +113,10 @@ func (cli *CommandLine) Run() {
 	sendAmount := sendCommand.Int("amount", 0, "Transfer amount")
 
 	printChainCommand := flag.NewFlagSet("print", flag.ExitOnError)
+
+	createWalletCommand := flag.NewFlagSet("createwallet", flag.ExitOnError)
+
+	listAddressesCommand := flag.NewFlagSet("listaddresses", flag.ExitOnError)
 
 	switch os.Args[1] {
 	case "createchain":
@@ -108,6 +134,15 @@ func (cli *CommandLine) Run() {
 	case "print":
 		err := printChainCommand.Parse(os.Args[2:])
 		blockchain.Handle(err)
+
+	case "listaddresses":
+		err := listAddressesCommand.Parse(os.Args[2:])
+		wallet.Handle(err)
+
+	case "createwallet":
+		err := createWalletCommand.Parse(os.Args[2:])
+		wallet.Handle(err)
+
 	default:
 		cli.printHelp()
 		runtime.Goexit()
@@ -139,6 +174,14 @@ func (cli *CommandLine) Run() {
 
 	if printChainCommand.Parsed() {
 		cli.printChain()
+	}
+
+	if createWalletCommand.Parsed() {
+		cli.createWallet()
+	}
+
+	if listAddressesCommand.Parsed() {
+		cli.listAddresses()
 	}
 
 }
