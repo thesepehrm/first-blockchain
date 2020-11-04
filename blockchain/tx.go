@@ -2,6 +2,7 @@ package blockchain
 
 import (
 	"bytes"
+	"encoding/gob"
 
 	"gitlab.com/thesepehrm/first-blockchain/wallet"
 )
@@ -11,6 +12,10 @@ type TxInput struct {
 	Out       int // Output index
 	Signature []byte
 	PubKey    []byte
+}
+
+type TxOutputs struct {
+	Outputs []TxOutput
 }
 
 type TxOutput struct {
@@ -39,4 +44,23 @@ func (out *TxOutput) Lock(address []byte) {
 
 func (out *TxOutput) isLockedWith(pubkeyHash []byte) bool {
 	return bytes.Compare(pubkeyHash, out.PubKeyHash) == 0
+}
+
+func (outs *TxOutputs) Serialize() []byte {
+	var content bytes.Buffer
+
+	encoder := gob.NewEncoder(&content)
+	err := encoder.Encode(outs)
+	Handle(err)
+
+	return content.Bytes()
+}
+
+func DeserializeOutputs(data []byte) TxOutputs {
+	decoder := gob.NewDecoder(bytes.NewReader(data))
+	outputs := TxOutputs{}
+	err := decoder.Decode(&outputs)
+	Handle(err)
+	return outputs
+
 }
