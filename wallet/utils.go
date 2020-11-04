@@ -12,12 +12,12 @@ func Handle(err error) {
 	}
 }
 
-func encodeBase58(in []byte) []byte {
+func EncodeBase58(in []byte) []byte {
 	encoded := base58.Encode(in)
 	return []byte(encoded)
 }
 
-func decodeBase58(in []byte) []byte {
+func DecodeBase58(in []byte) []byte {
 	decoded, err := base58.Decode(string(in[:]))
 	Handle(err)
 	return decoded

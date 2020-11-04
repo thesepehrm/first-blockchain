@@ -65,13 +65,13 @@ func (w Wallet) Address() []byte {
 
 	fullHash := append(versionedPublicKeyHash, checksum...)
 
-	address := encodeBase58(fullHash)
+	address := EncodeBase58(fullHash)
 
 	return address
 }
 
 func ValidateAddress(address string) bool {
-	decodedAddress := decodeBase58([]byte(address))
+	decodedAddress := DecodeBase58([]byte(address))
 
 	version := decodedAddress[0]
 	inputChecksum := decodedAddress[len(decodedAddress)-checksumLength:]
