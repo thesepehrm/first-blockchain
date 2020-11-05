@@ -46,11 +46,14 @@ func (tx Transaction) String() string {
 
 func CoinbaseTx(to, data string) *Transaction {
 	if data == "" {
-		data = fmt.Sprintf("Coins => %s", to)
+		randData := make([]byte, 20)
+		_, err := rand.Read(randData)
+		Handle(err)
+		data = fmt.Sprintf("%x", randData)
 	}
 
 	txin := TxInput{[]byte{}, -1, nil, []byte(data)}
-	txout := NewTxOutput(100, to)
+	txout := NewTxOutput(10, to)
 
 	tx := Transaction{nil, []TxInput{txin}, []TxOutput{*txout}}
 
