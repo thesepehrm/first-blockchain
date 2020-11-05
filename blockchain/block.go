@@ -2,7 +2,6 @@ package blockchain
 
 import (
 	"bytes"
-	"crypto/sha256"
 	"encoding/gob"
 	"log"
 )
@@ -19,11 +18,11 @@ func (b *Block) HashTransactions() []byte {
 	var txHashes [][]byte
 
 	for _, tx := range b.Transactions {
-		txHashes = append(txHashes, tx.ID)
+		txHashes = append(txHashes, tx.Serialize())
 	}
-	txHash := sha256.Sum256(bytes.Join(txHashes, []byte{}))
+	txTree := NewMerkleTree(txHashes)
 
-	return txHash[:]
+	return txTree.Root.Data
 }
 
 func CreateBlock(txns []*Transaction, prevHash []byte) *Block {
