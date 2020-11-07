@@ -217,7 +217,7 @@ func HandleAddr(req []byte) {
 	buffer.Write(req[commandLength:])
 
 	decoder := gob.NewDecoder(&buffer)
-	err := decoder.Decode(payload)
+	err := decoder.Decode(&payload)
 	Handle(err)
 
 	knownNodes = append(knownNodes, payload.AddrList...)
@@ -233,7 +233,7 @@ func HandleBlock(req []byte, chain *blockchain.BlockChain) {
 	buffer.Write(req[commandLength:])
 
 	decoder := gob.NewDecoder(&buffer)
-	err := decoder.Decode(payload)
+	err := decoder.Decode(&payload)
 	Handle(err)
 
 	block := blockchain.Deserialize(payload.Block)
@@ -248,7 +248,7 @@ func HandleBlock(req []byte, chain *blockchain.BlockChain) {
 		blocksInTransit = blocksInTransit[1:]
 
 	} else {
-		UTXOSet := blockchain.UTXOSet{chain}
+		UTXOSet := blockchain.UTXOSet{Blockchain: chain}
 		UTXOSet.ReIndex()
 	}
 }
@@ -260,7 +260,7 @@ func HandleGetBlocks(req []byte, chain *blockchain.BlockChain) {
 	buffer.Write(req[commandLength:])
 
 	decoder := gob.NewDecoder(&buffer)
-	err := decoder.Decode(payload)
+	err := decoder.Decode(&payload)
 	Handle(err)
 
 	blocks := chain.GetBlockHashes()
@@ -274,7 +274,7 @@ func HandleGetData(req []byte, chain *blockchain.BlockChain) {
 	buffer.Write(req[commandLength:])
 
 	decoder := gob.NewDecoder(&buffer)
-	err := decoder.Decode(payload)
+	err := decoder.Decode(&payload)
 	Handle(err)
 
 	switch payload.Type {
@@ -299,7 +299,7 @@ func HandleVersion(req []byte, chain *blockchain.BlockChain) {
 	buffer.Write(req[commandLength:])
 
 	decoder := gob.NewDecoder(&buffer)
-	err := decoder.Decode(payload)
+	err := decoder.Decode(&payload)
 	Handle(err)
 
 	bestHeight := chain.GetBestHeight()
@@ -324,7 +324,7 @@ func HandleTx(req []byte, chain *blockchain.BlockChain) {
 	buffer.Write(req[commandLength:])
 
 	decoder := gob.NewDecoder(&buffer)
-	err := decoder.Decode(payload)
+	err := decoder.Decode(&payload)
 	Handle(err)
 
 	txData := payload.Transaction
@@ -366,7 +366,7 @@ func MineTx(chain *blockchain.BlockChain) {
 	txs = append(txs, cbTx)
 
 	newBlock := chain.MineBlock(txs)
-	UTXOSet := blockchain.UTXOSet{chain}
+	UTXOSet := blockchain.UTXOSet{Blockchain: chain}
 	UTXOSet.ReIndex()
 
 	fmt.Println("New Block mined")
@@ -406,7 +406,7 @@ func HandleInv(request []byte, chain *blockchain.BlockChain) {
 
 		newInTransit := [][]byte{}
 		for _, block := range blocksInTransit {
-			if bytes.Compare(block, blockHash) != 0 {
+			if !bytes.Equal(block, blockHash) {
 				newInTransit = append(newInTransit, block)
 			}
 		}
