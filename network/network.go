@@ -282,7 +282,7 @@ func HandleGetData(req []byte, chain *blockchain.BlockChain) {
 		block, err := chain.GetBlock([]byte(payload.ID))
 		Handle(err)
 
-		SendBlock(payload.AddrFrom, &block)
+		SendBlock(payload.AddrFrom, block)
 	case "tx":
 		txID := hex.EncodeToString(payload.ID)
 		tx := memoryPool[txID]
@@ -334,7 +334,7 @@ func HandleTx(req []byte, chain *blockchain.BlockChain) {
 	if nodeAddress == knownNodes[0] { // Main full node
 		for _, node := range knownNodes {
 			if node != nodeAddress && node != payload.AddrFrom {
-				SendInv(node, "tx", []byte(tx.ID))
+				SendInv(node, "tx", [][]byte{tx.ID})
 			}
 
 		}
