@@ -48,7 +48,7 @@ func DeserializeTransaction(data []byte) Transaction {
 	var tx Transaction
 
 	decoder := gob.NewDecoder(bytes.NewReader(data))
-	err := decoder.Decode(tx)
+	err := decoder.Decode(&tx)
 	Handle(err)
 
 	return tx
@@ -140,13 +140,9 @@ func (tx *Transaction) TrimmedCopy() Transaction {
 	var inputs []TxInput
 	var outputs []TxOutput
 
-	for _, txInput := range tx.Inputs {
-		inputs = append(inputs, txInput)
-	}
+	inputs = append(inputs, tx.Inputs...)
 
-	for _, txOutput := range tx.Outputs {
-		outputs = append(outputs, txOutput)
-	}
+	outputs = append(outputs, tx.Outputs...)
 
 	txCopy := Transaction{[]byte{}, inputs, outputs}
 	return txCopy
@@ -216,9 +212,9 @@ func (tx *Transaction) Verify(prevTxs map[string]Transaction) bool {
 		x.SetBytes(in.PubKey[:(pubLen / 2)])
 		y.SetBytes(in.PubKey[(pubLen / 2):])
 
-		rawPublicKey := ecdsa.PublicKey{curve, &x, &y}
+		rawPublicKey := ecdsa.PublicKey{Curve: curve, X: &x, Y: &y}
 
-		if ecdsa.Verify(&rawPublicKey, txCopy.ID, &r, &s) == false {
+		if !ecdsa.Verify(&rawPublicKey, txCopy.ID, &r, &s) {
 			return false
 		}
 	}

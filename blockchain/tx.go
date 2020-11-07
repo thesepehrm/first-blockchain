@@ -33,7 +33,7 @@ func NewTxOutput(value int, address string) *TxOutput {
 
 func (in *TxInput) UsesKey(pubKeyHash []byte) bool {
 	lockHash := wallet.PublicKeyHash(in.PubKey)
-	return bytes.Compare(lockHash, pubKeyHash) == 0
+	return bytes.Equal(lockHash, pubKeyHash)
 }
 
 func (out *TxOutput) Lock(address []byte) {
@@ -43,7 +43,7 @@ func (out *TxOutput) Lock(address []byte) {
 }
 
 func (out *TxOutput) isLockedWith(pubkeyHash []byte) bool {
-	return bytes.Compare(pubkeyHash, out.PubKeyHash) == 0
+	return bytes.Equal(pubkeyHash, out.PubKeyHash)
 }
 
 func (outs *TxOutputs) Serialize() []byte {
