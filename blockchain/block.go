@@ -4,14 +4,17 @@ import (
 	"bytes"
 	"encoding/gob"
 	"log"
+	"time"
 )
 
 // Block is the structure of a block in a blockchain
 type Block struct {
+	Timestamp    int64
 	Nonce        int
 	Hash         []byte
 	Transactions []*Transaction
 	PrevHash     []byte
+	Height       int
 }
 
 func (b *Block) HashTransactions() []byte {
@@ -25,7 +28,7 @@ func (b *Block) HashTransactions() []byte {
 	return txTree.Root.Data
 }
 
-func CreateBlock(txns []*Transaction, prevHash []byte) *Block {
+func CreateBlock(txns []*Transaction, prevHash []byte, height int) *Block {
 	block := new(Block)
 	block.Transactions = txns
 	block.PrevHash = prevHash
@@ -33,13 +36,15 @@ func CreateBlock(txns []*Transaction, prevHash []byte) *Block {
 	nonce, hash := pow.Run()
 	block.Nonce = nonce
 	block.Hash = hash
+	block.Timestamp = time.Now().Unix()
+	block.Height = height
 
 	return block
 }
 
 // Genesis creates the genesis block
 func Genesis(coinBase *Transaction) *Block {
-	return CreateBlock([]*Transaction{coinBase}, []byte{})
+	return CreateBlock([]*Transaction{coinBase}, []byte{}, 0)
 }
 
 func (b *Block) Serialize() []byte {
