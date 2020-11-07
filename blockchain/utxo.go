@@ -9,8 +9,8 @@ import (
 )
 
 var (
-	utxoPrefix       = []byte("utxo-")
-	utxoPrefixLength = len(utxoPrefix)
+	utxoPrefix = []byte("utxo-")
+	//utxoPrefixLength = len(utxoPrefix)
 )
 
 type UTXOSet struct {
@@ -153,9 +153,7 @@ func (u *UTXOSet) Update(block *Block) {
 			}
 
 			newOutputs := TxOutputs{}
-			for _, out := range tx.Outputs {
-				newOutputs.Outputs = append(newOutputs.Outputs, out)
-			}
+			newOutputs.Outputs = append(newOutputs.Outputs, tx.Outputs...)
 
 			txID := append(utxoPrefix, tx.ID...)
 			if err := txn.Set(txID, newOutputs.Serialize()); err != nil {
