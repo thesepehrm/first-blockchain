@@ -24,11 +24,6 @@ type BlockChain struct {
 	Database *badger.DB
 }
 
-type BlockChainIterator struct {
-	CurrentHash []byte
-	Database    *badger.DB
-}
-
 func DBExists() bool {
 	if _, err := os.Stat(dbFile); os.IsNotExist(err) {
 		return false
@@ -135,35 +130,6 @@ func (chain *BlockChain) AddBlock(transactions []*Transaction) *Block {
 
 	Handle(err)
 	return newBlock
-}
-
-func (chain *BlockChain) Iterator() *BlockChainIterator {
-	iter := BlockChainIterator{chain.LastHash, chain.Database}
-
-	return &iter
-}
-
-func (iter *BlockChainIterator) Next() *Block {
-	var block *Block
-
-	err := iter.Database.View(func(txn *badger.Txn) error {
-		record, err := txn.Get(iter.CurrentHash)
-		Handle(err)
-
-		var serializedBlock []byte
-		err = record.Value(func(val []byte) error {
-			serializedBlock = append([]byte{}, val...)
-			return nil
-		})
-		Handle(err)
-		block = Deserialize(serializedBlock)
-		return err
-	})
-	Handle(err)
-
-	iter.CurrentHash = block.PrevHash
-
-	return block
 }
 
 func (chain *BlockChain) FindTransactions(ID []byte) (Transaction, error) {
