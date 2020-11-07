@@ -72,7 +72,7 @@ func ContinueBlockChain(nodeID string) *BlockChain {
 
 	path := fmt.Sprintf(dbPath, nodeID)
 
-	if DBExists(path) == false {
+	if !DBExists(path) {
 		fmt.Println("No blockchain exists; Make one!")
 		runtime.Goexit()
 	}
@@ -206,7 +206,7 @@ func (chain *BlockChain) FindTransactions(ID []byte) (Transaction, error) {
 	for {
 		block := iterator.Next()
 		for _, tx := range block.Transactions {
-			if bytes.Compare(tx.ID, ID) == 0 {
+			if bytes.Equal(tx.ID, ID) {
 				return *tx, nil
 			}
 		}
@@ -242,7 +242,7 @@ func (chain *BlockChain) FindUTXO() map[string]TxOutputs {
 				outs.Outputs = append(outs.Outputs, out)
 				UTXO[txID] = outs
 			}
-			if tx.IsCoinbase() == false {
+			if !tx.IsCoinbase() {
 				for _, in := range tx.Inputs {
 					inTxID := hex.EncodeToString(in.ID)
 					spentTxs[inTxID] = append(spentTxs[inTxID], in.Out)
