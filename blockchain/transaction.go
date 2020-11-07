@@ -44,6 +44,17 @@ func (tx Transaction) String() string {
 
 }
 
+func DeserializeTransaction(data []byte) Transaction {
+	var tx Transaction
+
+	decoder := gob.NewDecoder(bytes.NewReader(data))
+	err := decoder.Decode(tx)
+	Handle(err)
+
+	return tx
+
+}
+
 func CoinbaseTx(to, data string) *Transaction {
 	if data == "" {
 		randData := make([]byte, 20)
