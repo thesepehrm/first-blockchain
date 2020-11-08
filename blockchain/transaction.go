@@ -73,11 +73,11 @@ func CoinbaseTx(to, data string) *Transaction {
 	return &tx
 }
 
-func NewTransaction(from, to string, amount int, UTXO *UTXOSet) *Transaction {
+func NewTransaction(from, to string, amount int, UTXO *UTXOSet, nodeID string) *Transaction {
 	var inputs []TxInput
 	var outputs []TxOutput
 
-	wallets, err := wallet.CreateWallets()
+	wallets, err := wallet.CreateWallets(nodeID)
 	Handle(err)
 	w := wallets.GetWallet(from)
 	pubKeyHash := wallet.PublicKeyHash(w.PublicKey)
@@ -182,7 +182,7 @@ func (tx *Transaction) Verify(prevTxs map[string]Transaction) bool {
 		return true
 	}
 
-	for _, in := range prevTxs {
+	for _, in := range tx.Inputs {
 		if prevTxs[hex.EncodeToString(in.ID)].ID == nil {
 			log.Panic("Error: Previous transaction does not exist")
 		}
