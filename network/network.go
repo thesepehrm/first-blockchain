@@ -27,7 +27,7 @@ type nodes []string
 var (
 	nodeAddress     string
 	minerAddress    string
-	knownNodes      = nodes{"localhost:3000"}
+	KnownNodes      = nodes{"localhost:3000"}
 	blocksInTransit = [][]byte{}
 	memoryPool      = make(map[string]blockchain.Transaction)
 )
@@ -93,7 +93,7 @@ func HandleConnection(conn net.Conn, chain *blockchain.BlockChain) {
 	Handle(err)
 
 	command := BytesToCmd(req[:commandLength])
-	fmt.Printf("Requested command: %s", command)
+	fmt.Printf("Requested command: %s\n", command)
 
 	switch command {
 	case "block":
@@ -117,9 +117,9 @@ func HandleConnection(conn net.Conn, chain *blockchain.BlockChain) {
 
 }
 
-func Start(nodeID, minerNodeAddress string) {
+func Start(nodeID, minerWalletAddress string) {
 	nodeAddress = fmt.Sprintf("localhost:%s", nodeID)
-	minerAddress = minerNodeAddress
+	minerAddress = minerWalletAddress
 
 	listener, err := net.Listen(protocol, nodeAddress)
 	Handle(err)
@@ -128,15 +128,15 @@ func Start(nodeID, minerNodeAddress string) {
 	defer chain.Database.Close()
 	go CloseDB(chain)
 
-	if nodeAddress != knownNodes[0] {
-		SendVersion(knownNodes[0], chain)
-	} else {
-		for {
-			conn, err := listener.Accept()
-			Handle(err)
-			go HandleConnection(conn, chain)
-		}
+	if nodeAddress != KnownNodes[0] {
+		SendVersion(KnownNodes[0], chain)
 	}
+	for {
+		conn, err := listener.Accept()
+		Handle(err)
+		go HandleConnection(conn, chain)
+	}
+
 }
 
 func SendData(addr string, data []byte) {
@@ -144,10 +144,8 @@ func SendData(addr string, data []byte) {
 	if err != nil {
 		fmt.Printf("%s is not available\n", addr)
 
-		for _, node := range knownNodes {
-			if node != addr {
-				knownNodes = append(knownNodes, node)
-			}
+		if !KnownNodes.InArray(addr) {
+			KnownNodes = append(KnownNodes, addr)
 		}
 
 		return
@@ -168,7 +166,7 @@ func BuildAndSendData(addr, command string, data interface{}) {
 
 func SendAddr(addr string) {
 
-	data := Addr{append(knownNodes, addr)}
+	data := Addr{append(KnownNodes, addr)}
 	BuildAndSendData(addr, "addr", data)
 }
 
@@ -200,7 +198,7 @@ func SendGetBlocks(addr string) {
 
 func RequestBlocks() {
 
-	for _, node := range knownNodes {
+	for _, node := range KnownNodes {
 		SendGetBlocks(node)
 	}
 }
@@ -220,9 +218,9 @@ func HandleAddr(req []byte) {
 	err := decoder.Decode(&payload)
 	Handle(err)
 
-	knownNodes = append(knownNodes, payload.AddrList...)
+	KnownNodes = append(KnownNodes, payload.AddrList...)
 
-	fmt.Printf("There are %d known nodes in the list.", len(knownNodes))
+	fmt.Printf("There are %d known nodes in the list.", len(KnownNodes))
 	RequestBlocks()
 }
 
@@ -239,7 +237,7 @@ func HandleBlock(req []byte, chain *blockchain.BlockChain) {
 	block := blockchain.Deserialize(payload.Block)
 
 	chain.AddBlock(block)
-	fmt.Printf("New Block Received and added to chain: %x", block.Hash)
+	fmt.Printf("New Block Received and added to chain: %x\n", block.Hash)
 
 	if len(blocksInTransit) > 0 {
 		blockHash := blocksInTransit[0]
@@ -250,6 +248,7 @@ func HandleBlock(req []byte, chain *blockchain.BlockChain) {
 	} else {
 		UTXOSet := blockchain.UTXOSet{Blockchain: chain}
 		UTXOSet.ReIndex()
+		println("Reindexed chain")
 	}
 }
 
@@ -311,8 +310,8 @@ func HandleVersion(req []byte, chain *blockchain.BlockChain) {
 		SendGetBlocks(payload.AddrFrom)
 	}
 
-	if !knownNodes.InArray(payload.AddrFrom) {
-		knownNodes = append(knownNodes, payload.AddrFrom)
+	if !KnownNodes.InArray(payload.AddrFrom) {
+		KnownNodes = append(KnownNodes, payload.AddrFrom)
 	}
 
 }
@@ -331,15 +330,15 @@ func HandleTx(req []byte, chain *blockchain.BlockChain) {
 	tx := blockchain.DeserializeTransaction(txData)
 	memoryPool[hex.EncodeToString(tx.ID)] = tx
 
-	if nodeAddress == knownNodes[0] { // Main full node
-		for _, node := range knownNodes {
+	if nodeAddress == KnownNodes[0] { // Main full node
+		for _, node := range KnownNodes {
 			if node != nodeAddress && node != payload.AddrFrom {
 				SendInv(node, "tx", [][]byte{tx.ID})
 			}
 
 		}
 	} else {
-		if len(memoryPool) > 2 && len(minerAddress) > 0 {
+		if len(memoryPool) >= 1 && len(minerAddress) > 0 {
 			MineTx(chain)
 		}
 	}
@@ -350,11 +349,11 @@ func MineTx(chain *blockchain.BlockChain) {
 	var txs []*blockchain.Transaction
 
 	for id := range memoryPool {
-		fmt.Printf("tx: %s\n", memoryPool[id].ID)
+
 		tx := memoryPool[id]
-		if chain.VerifyTransaction(&tx) {
-			txs = append(txs, &tx)
-		}
+		//if chain.VerifyTransaction(&tx) {
+		txs = append(txs, &tx)
+		//}
 	}
 
 	if len(txs) == 0 {
@@ -376,7 +375,7 @@ func MineTx(chain *blockchain.BlockChain) {
 		delete(memoryPool, txID)
 	}
 
-	for _, node := range knownNodes {
+	for _, node := range KnownNodes {
 		if node != nodeAddress {
 			SendInv(node, "block", [][]byte{newBlock.Hash})
 		}
