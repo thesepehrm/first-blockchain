@@ -32,7 +32,7 @@ func InitBlockChain(address, nodeID string) *BlockChain {
 		runtime.Goexit()
 	}
 
-	opts := badger.DefaultOptions(dbPath)
+	opts := badger.DefaultOptions(path)
 	opts.Logger = nil
 
 	db, err := openDB(path, opts)
@@ -77,7 +77,7 @@ func ContinueBlockChain(nodeID string) *BlockChain {
 		runtime.Goexit()
 	}
 
-	opts := badger.DefaultOptions(dbPath)
+	opts := badger.DefaultOptions(path)
 	opts.Logger = nil
 
 	db, err := openDB(path, opts)
@@ -282,6 +282,5 @@ func (chain *BlockChain) VerifyTransaction(tx *Transaction) bool {
 		Handle(err)
 		prevTxs[hex.EncodeToString(prevTx.ID)] = prevTx
 	}
-
 	return tx.Verify(prevTxs)
 }
